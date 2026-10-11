@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+*.tar.gz
+
+# IP2Location database - license khong cho redistribute, tu tai ve va dat vao day
+data/*.BIN
+data/*.bin

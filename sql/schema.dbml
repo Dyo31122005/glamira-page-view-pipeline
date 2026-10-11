@@ -1,0 +1,75 @@
+// Paste file nay vao https://dbdiagram.io/d de xem so do truc quan
+
+Table dim_date {
+  date_key bigint [pk, note: 'format yyyyMMddHH, granularity theo gio']
+  full_date date
+  hour int16
+  day int16
+  month int16
+  year int16
+  quarter int16
+  day_name varchar
+  month_name varchar
+  is_weekend boolean
+  created_at timestamp [default: `now()`]
+}
+
+Table dim_location {
+  location_key int [pk, increment]
+  country_code varchar [note: 'vd GB, tu IP2Location']
+  country_name varchar
+  region_name varchar [note: 'NULL cho den khi nang cap IP2Location DB5 LITE tro len']
+  city_name varchar [note: 'NULL cho den khi nang cap IP2Location DB5 LITE tro len']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (country_code, region_name, city_name) [unique, note: 'natural key - xem COALESCE trong schema.sql']
+  }
+}
+
+Table dim_product {
+  product_key int [pk, increment]
+  product_id varchar [unique, note: 'natural key tu Kafka']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table dim_store {
+  store_key int [pk, increment]
+  store_id varchar [unique]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table dim_customer {
+  customer_key int [pk, increment]
+  device_id varchar [unique]
+  email_hashed varchar [note: 'sha256(email), khong luu email tho']
+  has_email boolean
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table fact_page_view {
+  id varchar [pk, note: 'log id tu Kafka, dam bao upsert idempotent']
+  date_key bigint [ref: > dim_date.date_key]
+  location_key int [ref: > dim_location.location_key]
+  product_key int [ref: > dim_product.product_key, note: 'null voi cac collection khong gan 1 product']
+  store_key int [ref: > dim_store.store_key]
+  customer_key int [ref: > dim_customer.customer_key]
+  browser varchar
+  os varchar
+  collection varchar
+  current_url varchar
+  referrer_url varchar
+  local_time timestamp
+  ingested_at timestamp [default: `now()`]
+
+  indexes {
+    date_key
+    (product_key, date_key)
+    (location_key, date_key)
+    store_key
+  }
+}
